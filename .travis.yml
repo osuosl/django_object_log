@@ -1,0 +1,10 @@
+language: python
+python:
+  - "2.6"
+  - "2.7"
+install:
+  - "pip install -q https://github.com/praekelt/django-setuptest/archive/f4eacb4a929cdcc853a5c053c282dada5bdedc99.tar.gz --use-mirrors"
+  - "pip install -r docs/requirements.txt --use-mirrors"
+  - "pip install -e ."
+script:
+  - "python setup.py test"

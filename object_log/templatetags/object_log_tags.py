@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.template import Library, Node, NodeList, Variable, TemplateSyntaxError
 from django.utils.safestring import SafeString
+from django.core.urlresolvers import reverse
 
 register = Library()
 
@@ -43,14 +44,15 @@ def contenttypelink(parser, token):
     bits = token.contents.split()
     if len(bits) != 3:
         raise TemplateSyntaxError, "'content_type_link' tag takes two arguments: a content type id and pk"
-    
+
     inner_nodelist = parser.parse(('endcontenttypelink',))
     parser.delete_first_token()
 
     return ContentTypeLinkNode(bits[1], bits[2], inner_nodelist)
 
 
-LINK_FORMAT = '<a href="%s/object/%%s/%%s/">' % settings.SITE_ROOT
+# LINK_FORMAT = '<a href="%s/object/%%s/%%s/">' % settings.SITE_ROOT
+LINK_FORMAT = '<a href="%s">'
 class ContentTypeLinkNode(Node):
 
     def __init__(self, content_type_id, pk, inner_nodelist):
@@ -65,7 +67,9 @@ class ContentTypeLinkNode(Node):
         if hasattr(content_type.model_class(), 'get_absolute_url'):
             pk = self.pk.resolve(context)
             nodelist = NodeList()
-            nodelist.append(LINK_FORMAT % (content_type.pk, pk))
+            nodelist.append(LINK_FORMAT % reverse("object-detail",
+                                                  args=(content_type.pk, pk)))
+            # nodelist.append(LINK_FORMAT % (content_type.pk, pk))
             nodelist.append(self.inner_nodelist.render(context))
             nodelist.append('</a>')
             return nodelist.render(context)
