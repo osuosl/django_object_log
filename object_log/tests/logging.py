@@ -22,6 +22,7 @@ from django.test.client import Client
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
+from django.core.urlresolvers import reverse
 
 from object_log.models import LogItem, LogAction, create_defaults
 
@@ -40,7 +41,7 @@ class TestLogActionModel(TestCase):
 
     def test_trivial(self):
         LogAction()
-    
+
     def test_log_action_register(self):
         """
         tests registering a log action
@@ -88,13 +89,13 @@ class TestLogItemModel(TestCase):
 
         user1 = User(username="Mod")
         user1.save()
-        
+
         user2 = User(username="Joe User")
         user2.save()
 
         dict_ = globals()
         dict_["user1"] = user1
-        
+
         #dict_ = globals()
         dict_["user2"] = user2
 
@@ -111,14 +112,14 @@ class TestLogItemModel(TestCase):
         Verifies:
             * LogItem, LogAction are created/deleted properly
         """
-        
+
         self.assertEqual(len(LogItem.objects.all()), 0)
-                
+
         log_item = LogItem.objects.log_action("EDIT", user1, user2,)
         self.assertTrue(log_item is not None)
         LogItem.objects.log_action("DELETE", user1, user2,)
         self.assertEqual(len(LogItem.objects.all()), 2)
-        
+
         LogItem.objects.log_action("EDIT", user1, user2,)
         self.assertEqual(len(LogItem.objects.all()), 3)
 
@@ -140,7 +141,7 @@ class TestLogItemModel(TestCase):
         item2.timestamp = timestamp
 
         ct = ContentType.objects.get_for_model(User)
-        self.assertEqual('\n<a href="%s">Mod</a> edited user\n<a href="/object/%s/%s/">Joe User</a>' %
+        self.assertEqual('\n<a href="%s">Mod</a> edited user\n<a href="/object/%s/%s">Joe User</a>' %
             (user1.get_absolute_url(), ct.id, item1.object_id1), str(item1))
         self.assertEqual('\n<a href="%s">Mod</a> deleted user Joe User' %
             (user1.get_absolute_url()), str(item2))
@@ -212,31 +213,31 @@ class TestObjectLogViews(TestCase):
         c = Client()
         superuser = self.superuser
         unauthorized = self.unauthorized
-        url = '/user/%s/object_log/'
+        # url = '/user/%s/object_log/'
         args = (unauthorized.pk, )
+        unknown_pk = (superuser.pk + unauthorized.pk) * 3
 
         # anonymous user
-        response = c.get(url % args, follow=True)
-        self.assertEqual(200, response.status_code)
-        self.assertTemplateUsed(response, 'registration/login.html')
+        response = c.get(reverse("user-object_log", args=args))
+        self.assertIn(response.status_code, (301, 302))
 
         # unauthorized user
         self.assertTrue(c.login(username=unauthorized.username, password='secret'))
-        response = c.get(url % args)
+        response = c.get(reverse("user-object_log", args=args))
         self.assertEqual(403, response.status_code)
 
         # superuser - unknown user
         self.assertTrue(c.login(username=superuser.username, password='secret'))
-        response = c.get(url % -1)
+        response = c.get(reverse("user-object_log", args=(unknown_pk, )))
         self.assertEqual(404, response.status_code)
 
         # superuser - checking self
-        response = c.get(url % superuser.pk )
+        response = c.get(reverse("user-object_log", args=(superuser.pk, )))
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, response.context['log'].count(), response.content)
 
         # superuser - checking other user
-        response = c.get(url % args )
+        response = c.get(reverse("user-object_log", args=args))
         self.assertEqual(200, response.status_code)
         self.assertEqual(8, response.context['log'].count())
 
@@ -245,31 +246,31 @@ class TestObjectLogViews(TestCase):
         c = Client()
         superuser = self.superuser
         unauthorized = self.unauthorized
-        url = '/user/%s/actions'
+        # url = '/user/%s/actions'
         args = (unauthorized.pk, )
+        unknown_pk = (superuser.pk + unauthorized.pk) * 3
 
         # anonymous user
-        response = c.get(url % args, follow=True)
-        self.assertEqual(200, response.status_code)
-        self.assertTemplateUsed(response, 'registration/login.html')
+        response = c.get(reverse('user-object_log-actions', args=args))
+        self.assertIn(response.status_code, (301, 302))
 
         # unauthorized user
         self.assertTrue(c.login(username=unauthorized.username, password='secret'))
-        response = c.get(url % args)
+        response = c.get(reverse('user-object_log-actions', args=args))
         self.assertEqual(403, response.status_code)
 
         # superuser - unknown user
         self.assertTrue(c.login(username=superuser.username, password='secret'))
-        response = c.get(url % -1)
+        response = c.get(reverse('user-object_log-actions', args=(unknown_pk, )))
         self.assertEqual(404, response.status_code)
 
         # superuser - checking self
-        response = c.get(url % superuser.pk )
+        response = c.get(reverse('user-object_log-actions', args=(superuser.pk, )))
         self.assertEqual(200, response.status_code)
         self.assertEqual(6, response.context['log'].count())
 
         # superuser - checking other user
-        response = c.get(url % args )
+        response = c.get(reverse('user-object_log-actions', args=args))
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, response.context['log'].count())
 
@@ -278,27 +279,27 @@ class TestObjectLogViews(TestCase):
         c = Client()
         superuser = self.superuser
         unauthorized = self.unauthorized
-        url = '/group/%s/object_log'
+        # url = '/group/%s/object_log'
         args = (self.group.pk, )
+        unknown_pk = self.group.pk * 3
 
         LogItem.objects.log_action('EDIT', superuser, self.group)
 
         # anonymous user
-        response = c.get(url % args, follow=True)
-        self.assertEqual(200, response.status_code)
-        self.assertTemplateUsed(response, 'registration/login.html')
+        response = c.get(reverse('group-object_log', args=args))
+        self.assertIn(response.status_code, (301, 302))
 
         # unauthorized user
         self.assertTrue(c.login(username=unauthorized.username, password='secret'))
-        response = c.get(url % args)
+        response = c.get(reverse('group-object_log', args=args))
         self.assertEqual(403, response.status_code)
 
         # superuser - unknown user
         self.assertTrue(c.login(username=superuser.username, password='secret'))
-        response = c.get(url % -1)
+        response = c.get(reverse('group-object_log', args=(unknown_pk, )))
         self.assertEqual(404, response.status_code)
 
         # superuser - checking self
-        response = c.get(url % args )
+        response = c.get(reverse('group-object_log', args=args))
         self.assertEqual(200, response.status_code)
         self.assertEqual(1, response.context['log'].count())

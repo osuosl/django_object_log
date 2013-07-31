@@ -19,4 +19,12 @@ setup(name='django-object-log',
           "License :: OSI Approved :: MIT License",
           'Framework :: Django',
           ],
+
+      # Enable django-setuptest
+      test_suite='setuptest.setuptest.SetupTestSuite',
+      tests_require=(
+        'django-setuptest',
+        # Required by django-setuptools on Python 2.6
+        'argparse'
+      ),
       )
