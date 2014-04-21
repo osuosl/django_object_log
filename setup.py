@@ -15,6 +15,7 @@ setup(name='django-object-log',
       url='http://code.osuosl.org/projects/django-object-log',
       packages=['object_log'],
       include_package_data=True,
+      zip_safe=False,
       classifiers=[
           "License :: OSI Approved :: MIT License",
           'Framework :: Django',
