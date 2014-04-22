@@ -2,6 +2,16 @@
 Changelog
 ======================================
 
+0.7.1
+---------
+ * #16095 - Prevent installation as a zip file with 'set zip_safe=False'
+
+0.7
+---------
+ * 3807 - Add pagination to User Actions view
+ * 3813 - Add pagination to object log view
+ * 5829 - Replace LogAction and LogItem with more aptly named models
+ * 9435 - Use DATETIME_FORMAT templatetags
 
 0.6
 ---------
