@@ -11,14 +11,16 @@ from object_log.models import LogItem
 
 def list_for_object(request, obj, rest=False):
     """
-    Lists all actions that involve a given object.  This will check
-    LogItem.object1, LogItem.object2, and LogItem.object3.
+    Object log does not expose a view that renders a log for any object.
+    Instead it provides a view shortcut that can be used within your
+    application.  Wrap ``list_for_object`` within your own view.
+    ``list_for_object`` will return log entries with the object listed as
+    ``object1``, ``object2``, or ``object3``.
 
-    This view does not
-    include any permission checks as it is intend
+    This view does not include any permission checks.
 
-    @param request: http request
-    @param obj: object to retrieve log items for
+    :param request: HttpRequest
+    :param obj: object to retrieve log items for
     """
     content_type = ContentType.objects.get_for_model(obj)
 
@@ -41,9 +43,10 @@ def list_for_object(request, obj, rest=False):
 @login_required
 def list_for_user(request, pk, rest=False):
     """
-    Provided view for listing actions performed on a user.
+    Provided view for listing actions performed on a user.  This may only be
+    used by superusers.
 
-    This may only be used by superusers
+    Accessible from ``/user/(?P<pk>\d+)/object_log/``.
     """
     if not request.user.is_superuser:
         if not rest:
@@ -58,9 +61,10 @@ def list_for_user(request, pk, rest=False):
 @login_required
 def list_for_group(request, pk, rest=False):
     """
-    Provided view for listing actions performed on a group.
+    Provided view for listing actions performed on a group.  This may only be
+    used by superusers.
 
-    This may only be used by superusers
+    Accessible from ``/group/(?P<pk>\d+)/object_log/``.
     """
     if not request.user.is_superuser:
         if not rest:
@@ -80,8 +84,10 @@ def list_user_actions(request, pk, rest=False):
     List all actions a user has performed.  This view can only be used by
     superusers.
 
-    @param request: HttpRequest
-    @param pk: Primary Key of User to get log for.
+    Accessible from ``/user/(?P<pk>\d+)/actions/``.
+
+    :param request: HttpRequest
+    :param pk: primary key of User to get log for
     """
     if not request.user.is_superuser:
         if not rest:
